@@ -1,0 +1,589 @@
+{
+  "name": "worker_rrhh_modulo4_olga_pappalardo",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "session_id"
+            },
+            {
+              "name": "empleado_ID"
+            },
+            {
+              "name": "dias_solicitados",
+              "type": "number"
+            },
+            {
+              "name": "dias_disponibles",
+              "type": "number"
+            },
+            {
+              "name": "manager_email"
+            },
+            {
+              "name": "fecha_hora_solicitud"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        352
+      ],
+      "id": "e2861c46-dda4-4190-a2dd-777faba07392",
+      "name": "Execute Workflow Trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ec1",
+              "leftValue": "={{ Number($json.dias_solicitados) === 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        352
+      ],
+      "id": "474551ef-b159-4b57-b2d9-db87f8d81f4b",
+      "name": "Es Consulta de Saldo"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Desenlace 1: consulta pura. Igual se registra en Airtable para\n// dejar traza de la interacción, pero con estado \"consulta\" —\n// no es una solicitud real, no requiere aprobación de nadie.\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst fechaHoraSolicitud = trigger.fecha_hora_solicitud;\nconst solicitudId = 'SOL-' + Date.now();\n\nreturn [{\n  json: {\n    tipo: 'consulta',\n    solicitud_ID: solicitudId,\n    empleado_ID: trigger.empleado_ID,\n    dias_solicitados: 0,\n    dias_disponibles: Number(trigger.dias_disponibles) || 0,\n    estado: 'consulta',\n    fecha_solicitud: fechaHoraSolicitud,\n    token_aprobacion: ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        176
+      ],
+      "id": "519ff25d-3efd-45cb-895a-b6d9ca525cdb",
+      "name": "Armar Consulta"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Desenlaces 2 y 3: calcula si el saldo alcanza. Empate exacto\n// (disponibles == solicitados) SÍ alcanza. Ninguno de los dos casos\n// lo aprueba o rechaza el sistema — solo el caso \"alcanza\" queda\n// pendiente de un humano; el que no alcanza se registra igual mente\n// (estado: rechazado automáticamente) pero sin pasar por aprobación.\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst fechaHoraSolicitud = trigger.fecha_hora_solicitud;\nconst diasSolicitados = Number(trigger.dias_solicitados) || 0;\nconst diasDisponibles = Number(trigger.dias_disponibles) || 0;\nconst diferencia = diasDisponibles - diasSolicitados;\nconst alcanza = diferencia >= 0;\n\nconst solicitudId = 'SOL-' + Date.now();\nconst tokenAprobacion = alcanza\n  ? Math.random().toString(36).substring(2, 10) + Date.now().toString(36)\n  : '';\n\nreturn [{\n  json: {\n    tipo: alcanza ? 'solicitud_pendiente' : 'rechazo_automatico',\n    solicitud_ID: solicitudId,\n    empleado_ID: trigger.empleado_ID,\n    dias_solicitados: diasSolicitados,\n    dias_disponibles: diasDisponibles,\n    excede_saldo: !alcanza,\n    estado: alcanza ? 'pendiente' : 'rechazado_automaticamente',\n    token_aprobacion: tokenAprobacion,\n    fecha_solicitud: fechaHoraSolicitud\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        480
+      ],
+      "id": "3f44b867-b400-40fd-8da8-e4a403d24508",
+      "name": "Calcular Diferencia y Armar Solicitud"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        352
+      ],
+      "id": "382c0b3e-c39e-44b1-b72b-aa0e9b69bb94",
+      "name": "Preparar Datos"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appk5lcfLLGtw0ORV",
+          "mode": "list",
+          "cachedResultName": "Solicitudes_RRHH.xlsx",
+          "cachedResultUrl": "https://airtable.com/appk5lcfLLGtw0ORV"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbliAx2rvhZbpSf9c",
+          "mode": "list",
+          "cachedResultName": "Solicitudes_RRHH",
+          "cachedResultUrl": "https://airtable.com/appk5lcfLLGtw0ORV/tbliAx2rvhZbpSf9c"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "solicitud_ID": "={{ $json.solicitud_ID }}",
+            "empleado_ID": "={{ $json.empleado_ID }}",
+            "dias_solicitados": "={{ $json.dias_solicitados }}",
+            "estado": "={{ $json.estado }}",
+            "token_aprobacion": "={{ $json.token_aprobacion }}",
+            "fecha_solicitud": "={{ $json.fecha_solicitud }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "solicitud_ID",
+              "displayName": "solicitud_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "empleado_ID",
+              "displayName": "empleado_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "fecha_solicitud",
+              "displayName": "fecha_solicitud",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "dias_solicitados",
+              "displayName": "dias_solicitados",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "fecha_resolucion",
+              "displayName": "fecha_resolucion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "token_aprobacion",
+              "displayName": "token_aprobacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        336
+      ],
+      "id": "e97c4039-4f3b-45bc-ac4d-682e7511804a",
+      "name": "Registrar en Solicitudes_RRHH",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "5xs9oDCnX4SDvjeO",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "data",
+              "value": "={{ $('Preparar Datos').item.json }}",
+              "type": "object"
+            },
+            {
+              "id": "s3",
+              "name": "requiere_aprobacion",
+              "value": "={{ $('Preparar Datos').item.json.tipo === 'solicitud_pendiente' }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        -16
+      ],
+      "id": "ca62cb42-1a28-4d44-bc82-479a69e64251",
+      "name": "Formatear Salida"
+    },
+    {
+      "parameters": {
+        "content": "Worker_RRHH\n( tres desenlaces)\nUn solo IF separa consulta pura de pedido real. El segundo\nCode calcula si alcanza (empate SÍ alcanza) y arma el\nestado correspondiente. Los 3 caminos convergen en\n\"Preparar Datos\" antes de Airtable — por eso después se\npuede referenciar ese nodo sin importar qué rama corrió.\nSIEMPRE se registra un renglón en Solicitudes_RRHH.",
+        "height": 528,
+        "width": 150
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -128,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "4b4df88e-7eec-4765-b987-4e545bc6b4eb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "0a14e234-bb93-446b-a41d-86a30d1263fa",
+      "name": "🏁 Salida del Worker rrhh"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "war1",
+              "leftValue": "={{ $('Preparar Datos').item.json.tipo === 'solicitud_pendiente' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        -32
+      ],
+      "id": "08d315eb-f28e-4ef6-a61a-57d97b75ac84",
+      "name": "Requiere Aprobacion"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Execute Workflow Trigger').first().json.manager_email }}",
+        "subject": "={{ 'Solicitud de vacaciones pendiente - ' + $('Preparar Datos').item.json.empleado_ID }}",
+        "emailType": "text",
+        "message": "={{ 'Tu empleado ' + $('Preparar Datos').item.json.empleado_ID + ' solicitó ' + $('Preparar Datos').item.json.dias_solicitados + ' días de vacaciones.\\n\\nID de solicitud: ' + $('Preparar Datos').item.json.solicitud_ID + '\\n\\nPor favor revisá y aprobá o rechazá la solicitud en el sistema.' }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        -64
+      ],
+      "id": "60487415-72fb-4e1e-8408-6376d15e99d9",
+      "name": "Enviar Mail a Manager",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "7ddf37b9-e0bd-4a5b-9458-f10fe39140d4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nqHAUoMyg9kEcgrI",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "al1",
+              "name": "workflow_origen",
+              "value": "Worker_RRHH",
+              "type": "string"
+            },
+            {
+              "id": "al2",
+              "name": "nodo_origen",
+              "value": "Registrar en Solicitudes_RRHH / Enviar Mail a Manager",
+              "type": "string"
+            },
+            {
+              "id": "al3",
+              "name": "mensaje_error",
+              "value": "={{ $json.error?.message || JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1456,
+        320
+      ],
+      "id": "a0ac0a11-7c9e-4eb4-8cc5-35b65179a774",
+      "name": "Preparar Alerta"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "REEMPLAZAR_ID_ALERTAR_FALLO",
+          "mode": "list"
+        },
+        "workflowInputs": {
+          "value": {
+            "workflow_origen": "={{ $json.workflow_origen }}",
+            "nodo_origen": "={{ $json.nodo_origen }}",
+            "mensaje_error": "={{ $json.mensaje_error }}"
+          },
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1632,
+        336
+      ],
+      "id": "57deb0eb-32c0-428b-9db8-57ee774f5245",
+      "name": "Ejecutar Alerta de Fallo"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Es Consulta de Saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Consulta de Saldo": {
+      "main": [
+        [
+          {
+            "node": "Armar Consulta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Calcular Diferencia y Armar Solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar Consulta": {
+      "main": [
+        [
+          {
+            "node": "Preparar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Diferencia y Armar Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Preparar Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Datos": {
+      "main": [
+        [
+          {
+            "node": "Registrar en Solicitudes_RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en Solicitudes_RRHH": {
+      "main": [
+        [
+          {
+            "node": "Requiere Aprobacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Salida": {
+      "main": [
+        [
+          {
+            "node": "🏁 Salida del Worker rrhh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requiere Aprobacion": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mail a Manager",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear Salida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Mail a Manager": {
+      "main": [
+        [
+          {
+            "node": "Formatear Salida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Alerta": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Alerta de Fallo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "00258430-1463-457d-9246-70041614fd77",
+  "meta": {
+    "instanceId": "971c7d1a0870c5402daced6091d65ef2a98bf7cf01af8640ad658b5b54739728"
+  },
+  "id": "PaDZOsJfyCTu9lIT",
+  "tags": []
+}
