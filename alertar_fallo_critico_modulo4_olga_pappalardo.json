@@ -1,0 +1,116 @@
+{
+  "name": "alertar_fallo_critico_modulo4_olga_pappalardo",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "workflow_origen"
+            },
+            {
+              "name": "nodo_origen"
+            },
+            {
+              "name": "mensaje_error"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        160
+      ],
+      "id": "af005a2d-d2d1-43b1-8415-b8e6df6a6176",
+      "name": "Execute Workflow Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "iautomatiz@gmail.com",
+        "subject": "={{ 'ALERTA: fallo crítico en ' + $json.workflow_origen + ' / ' + $json.nodo_origen }}",
+        "emailType": "text",
+        "message": "={{ 'El nodo \"' + $json.nodo_origen + '\" del workflow \"' + $json.workflow_origen + '\" falló 3 veces seguidas y se detuvo (no reintenta sin límite).\\n\\nError reportado:\\n' + $json.mensaje_error + '\\n\\nRevisar el panel de ejecuciones para más detalle.' }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        160
+      ],
+      "id": "04b04500-6313-43eb-aaa7-e0189b8912d8",
+      "name": "Enviar Alerta",
+      "webhookId": "5afa8300-d73b-48ba-920c-8aa3834a47ee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nqHAUoMyg9kEcgrI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        448,
+        160
+      ],
+      "id": "9697898e-5ce0-4e95-8840-144fdb733399",
+      "name": "🏁 Salida"
+    },
+    {
+      "parameters": {
+        "content": "## Alertar Fallo Critico\nWorkflow único de alertas, llamado desde el Manager y\nambos Workers cuando un nodo crítico (Airtable/Gmail)\nagota sus 3 reintentos. Centraliza el texto del mail en\nun solo lugar — si mañana cambia el canal (Slack) o el\ntexto, se edita acá una sola vez.\n\nRecibe: workflow_origen, nodo_origen, mensaje_error."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "6502bec6-c8af-4fba-8e63-e72e6b7ef213",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Enviar Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Alerta": {
+      "main": [
+        [
+          {
+            "node": "🏁 Salida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "389f152f-a7f6-48ad-bc58-b01236c81d63",
+  "meta": {
+    "instanceId": "971c7d1a0870c5402daced6091d65ef2a98bf7cf01af8640ad658b5b54739728"
+  },
+  "id": "wWNZy0xXYHz722Su",
+  "tags": []
+}

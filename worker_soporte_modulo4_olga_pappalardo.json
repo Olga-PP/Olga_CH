@@ -1,0 +1,859 @@
+{
+  "name": "worker_soporte_modulo4_olga_pappalardo",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "session_id"
+            },
+            {
+              "name": "empleado_ID"
+            },
+            {
+              "name": "descripcion_ticket"
+            },
+            {
+              "name": "fecha_hora_solicitud"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -336,
+        128
+      ],
+      "id": "750a2735-8468-47c1-9955-01a2ee45d3b2",
+      "name": "Execute Workflow Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tarea atómica: validar que haya una descripción real antes de\n// crear el ticket (evita registros vacíos en Airtable).\nconst trigger = $('Execute Workflow Trigger').first().json;\nconst fechaHoraSolicitud = trigger.fecha_hora_solicitud;\nconst descripcion = (trigger.descripcion_ticket || '').trim();\n\nif (!descripcion) {\n  return [{ json: { valido: false, motivo: 'descripcion_vacia' } }];\n}\n\nconst ticketId = 'TCK-' + Date.now();\n\nreturn [{\n  json: {\n    valido: true,\n    ticket_ID: ticketId,\n    empleado_ID: trigger.empleado_ID,\n    descripcion,\n    estado: 'abierto',\n    fecha_creacion: fechaHoraSolicitud\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        128
+      ],
+      "id": "7f8c4c2f-694f-4aa3-861e-7089114d58c5",
+      "name": "Generar Ticket"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        128
+      ],
+      "id": "660a9b7d-e240-4efc-a6be-c3f8a3062d8c",
+      "name": "Es Valido"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appbxfLZH4TJ6ZlBq",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte.xlsx",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxSUmY6azu7K08p",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq/tblxSUmY6azu7K08p"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_ID": "={{ $json.ticket_ID }}",
+            "empleado_ID": "={{ $json.empleado_ID }}",
+            "descripcion": "={{ $json.descripcion }}",
+            "estado": "={{ $json.estado }}",
+            "Fecha_Creacion": "={{ $json.fecha_creacion }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticket_ID",
+              "displayName": "ticket_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "empleado_ID",
+              "displayName": "empleado_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Creacion",
+              "displayName": "Fecha_Creacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Field 5",
+              "displayName": "Field 5",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fila 2 = ejemplo (borrala antes de importar a Airtable)",
+              "displayName": "Fila 2 = ejemplo (borrala antes de importar a Airtable)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        512,
+        128
+      ],
+      "id": "f6a8279a-4626-42e9-b34b-545add128a78",
+      "name": "Crear Ticket",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "5xs9oDCnX4SDvjeO",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "data",
+              "value": "={{ $json }}",
+              "type": "object"
+            },
+            {
+              "id": "s3",
+              "name": "requiere_aprobacion",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        48
+      ],
+      "id": "cc9e323c-2075-4de6-90b8-64606aad9edf",
+      "name": "Formatear Salida Exitosa"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "status",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "e2",
+              "name": "data",
+              "value": "={{ { \"motivo\": $json.motivo } }}",
+              "type": "object"
+            },
+            {
+              "id": "e3",
+              "name": "requiere_aprobacion",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        288
+      ],
+      "id": "de4a224a-cc14-4255-b7ef-7cbce1307221",
+      "name": "Formatear Salida Error"
+    },
+    {
+      "parameters": {
+        "content": "Worker_Soporte\nTarea atómica: crea un ticket en Airtable. El IF \"Es Valido\"\nevita crear un ticket vacío si no vino descripción (manejo\nde fallos, igual que en Worker_RRHH)."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "0c05b9aa-cf97-44c3-9c94-5cbdefecfa04",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        64
+      ],
+      "id": "7cdb32a8-36a6-4fdb-8267-c4f4d0831d33",
+      "name": "🏁 Salida del Worker S"
+    },
+    {
+      "parameters": {
+        "sendTo": "soporte@empresa.com",
+        "subject": "={{ 'Nuevo ticket: ' + $json.ticket_ID }}",
+        "emailType": "text",
+        "message": "={{ 'Se generó el ticket ' + $json.ticket_ID + ' para el empleado ' + $json.empleado_ID + '.\\n\\nDescripción: ' + $json.descripcion }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        112
+      ],
+      "id": "3360e280-f8b6-4486-b59b-deff36886525",
+      "name": "Notificar a Soporte Tecnico",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "webhookId": "34704b69-a8b4-4ee8-a597-d862d6b1f6cd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "nqHAUoMyg9kEcgrI",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "al1",
+              "name": "workflow_origen",
+              "value": "Worker_Soporte",
+              "type": "string"
+            },
+            {
+              "id": "al2",
+              "name": "nodo_origen",
+              "value": "Crear Ticket",
+              "type": "string"
+            },
+            {
+              "id": "al3",
+              "name": "mensaje_error",
+              "value": "={{ $json.error?.message || JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        288
+      ],
+      "id": "570cc4be-4f79-401d-98c8-c86cdac695c0",
+      "name": "Preparar Alerta"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "wWNZy0xXYHz722Su",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/wWNZy0xXYHz722Su",
+          "cachedResultName": "alertar_fallo_critico_modulo4_olga_pappalardo"
+        },
+        "workflowInputs": {
+          "value": {
+            "workflow_origen": "={{ $json.workflow_origen }}",
+            "nodo_origen": "={{ $json.nodo_origen }}",
+            "mensaje_error": "={{ $json.mensaje_error }}"
+          },
+          "schema": []
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        416
+      ],
+      "id": "ce6c98b8-8613-4095-89ed-b9562439af00",
+      "name": "Ejecutar Alerta de Fallo"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appbxfLZH4TJ6ZlBq",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte.xlsx",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxSUmY6azu7K08p",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq/tblxSUmY6azu7K08p"
+        },
+        "filterByFormula": "={{ \"AND({empleado_ID}='\" + $json.empleado_ID + \"', {estado}='abierto')\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "alwaysOutputData": true,
+      "position": [
+        160,
+        80
+      ],
+      "id": "5093acd0-ccfd-44ec-bcde-75a84bed5cf3",
+      "name": "🔍 Buscar Ticket Abierto",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "5xs9oDCnX4SDvjeO",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Look up antes de Create (Paso 6 / punto ② de la rúbrica) — ahora vive DENTRO del Worker, así beneficia a cualquier canal que lo llame (chat o mail), no solo a uno."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "te1",
+              "leftValue": "={{ !!$json.id }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        -64
+      ],
+      "id": "e64a392f-561d-4a6d-896d-e225c0d3c2c7",
+      "name": "🔀 Ticket Abierto Existe"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appbxfLZH4TJ6ZlBq",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte.xlsx",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxSUmY6azu7K08p",
+          "mode": "list",
+          "cachedResultName": "Tickets_Soporte",
+          "cachedResultUrl": "https://airtable.com/appbxfLZH4TJ6ZlBq/tblxSUmY6azu7K08p"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "descripcion": "={{ $json.descripcion + '\\n---\\n' + $('Generar Ticket').item.json.descripcion }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true
+            },
+            {
+              "id": "ticket_ID",
+              "displayName": "ticket_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "empleado_ID",
+              "displayName": "empleado_ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha_Creacion",
+              "displayName": "Fecha_Creacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Field 5",
+              "displayName": "Field 5",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fila 2 = ejemplo (borrala antes de importar a Airtable)",
+              "displayName": "Fila 2 = ejemplo (borrala antes de importar a Airtable)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        -128
+      ],
+      "id": "1f38f147-616e-403c-ab9a-7508a35000da",
+      "name": "✏️ Actualizar Ticket Existente",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "5xs9oDCnX4SDvjeO",
+          "name": "Airtable Personal Access Token account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pda1",
+              "name": "tipo",
+              "value": "ticket_actualizado",
+              "type": "string"
+            },
+            {
+              "id": "pda2",
+              "name": "ticket_ID",
+              "value": "={{ $('🔍 Buscar Ticket Abierto').item.json.ticket_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "pda3",
+              "name": "empleado_ID",
+              "value": "={{ $('Generar Ticket').item.json.empleado_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "pda4",
+              "name": "estado",
+              "value": "abierto",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        -176
+      ],
+      "id": "4d08df7c-e69f-49ee-896e-0b333dac897c",
+      "name": "Preparar Datos Ticket (Actualizado)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pdn1",
+              "name": "tipo",
+              "value": "ticket_creado",
+              "type": "string"
+            },
+            {
+              "id": "pdn2",
+              "name": "ticket_ID",
+              "value": "={{ $('Generar Ticket').item.json.ticket_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "pdn3",
+              "name": "empleado_ID",
+              "value": "={{ $('Generar Ticket').item.json.empleado_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "pdn4",
+              "name": "estado",
+              "value": "abierto",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        128
+      ],
+      "id": "b72e0332-ad24-4f33-9662-a9dee8e6a3b4",
+      "name": "Preparar Datos Ticket (Nuevo)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generar Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar Ticket": {
+      "main": [
+        [
+          {
+            "node": "Es Valido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es Valido": {
+      "main": [
+        [
+          {
+            "node": "🔍 Buscar Ticket Abierto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Formatear Salida Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Ticket": {
+      "main": [
+        [
+          {
+            "node": "Notificar a Soporte Tecnico",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Salida Exitosa": {
+      "main": [
+        [
+          {
+            "node": "🏁 Salida del Worker S",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar a Soporte Tecnico": {
+      "main": [
+        [
+          {
+            "node": "Preparar Datos Ticket (Nuevo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Alerta": {
+      "main": [
+        [
+          {
+            "node": "Ejecutar Alerta de Fallo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Buscar Ticket Abierto": {
+      "main": [
+        [
+          {
+            "node": "🔀 Ticket Abierto Existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Ticket Abierto Existe": {
+      "main": [
+        [
+          {
+            "node": "✏️ Actualizar Ticket Existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✏️ Actualizar Ticket Existente": {
+      "main": [
+        [
+          {
+            "node": "Preparar Datos Ticket (Actualizado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Datos Ticket (Actualizado)": {
+      "main": [
+        [
+          {
+            "node": "Formatear Salida Exitosa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Datos Ticket (Nuevo)": {
+      "main": [
+        [
+          {
+            "node": "Formatear Salida Exitosa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ed2cc7d-8cec-4c8f-a353-a5311d22d33d",
+  "meta": {
+    "instanceId": "971c7d1a0870c5402daced6091d65ef2a98bf7cf01af8640ad658b5b54739728"
+  },
+  "id": "EesXPjUoQkJdUJDx",
+  "tags": []
+}
